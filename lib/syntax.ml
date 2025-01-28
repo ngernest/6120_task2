@@ -12,6 +12,13 @@ type ty =
   | TyInt
   | TyBool
 
+(** Converts a string to a [ty] *)
+let ty_of_string (str : string) : ty =
+  match str with
+  | "int" -> TyInt
+  | "bool" -> TyBool
+  | _ -> failwith (spf "invalid string: %s\n" str)
+
 (** Literal values (int & bool values) *)
 type literal =
   | LitInt of int
@@ -128,13 +135,34 @@ let get_args (json : Yojson.Basic.t) : arg list =
 (** Retrieves the contents of the ["fields"] field in a JSON object 
     as a list of strings  *)
 let get_labels (json : Yojson.Basic.t) : arg list =
-  let args_list = Helpers.list_of_json (json $! "arlabelsgs") in
-  List.map ~f:to_string args_list
+  let labels_list = Helpers.list_of_json (json $! "labels") in
+  List.map ~f:to_string labels_list
 
+(** Retrieves the name and type of the destination variable
+    from a JSON object *)
+let get_dest (json : Yojson.Basic.t) : dest =
+  let dest_string = to_string (json $! "dest") in
+  let ty = ty_of_string @@ to_string (json $! "type") in
+  (dest_string, ty)
+
+(** Converts a JSON object to an [instr] *)
 let instr_of_json (json : Yojson.Basic.t) : instr =
   match json $! "label" with
   | `String label -> Label label
   | `Null ->
     let opcode : string = to_string (json $! "op") in
-    if is_binop opcode then failwith "TODO (Binop (_, _))" else failwith "TODO"
+    (* Binary operators *)
+    if is_binop opcode then
+      let binop = binop_of_string opcode in
+      let dest = get_dest json in
+      let args = get_args json in
+      let arg1 = List.nth args 0 in
+      let arg2 = List.nth args 1 in
+      Binop (dest, binop, arg1, arg2)
+    else if is_unop opcode then
+      let unop = unop_of_string opcode in
+      let dest = get_dest json in
+      let arg = List.hd (get_args json) in
+      Unop (dest, unop, arg)
+    else failwith "TODO"
   | _ -> failwith (Printf.sprintf "Invalid JSON : %s" (to_string json))

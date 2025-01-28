@@ -1,5 +1,7 @@
 open Yojson.Basic.Util
 
+let spf = Printf.sprintf
+
 (** Reads a JSON file from [stdin] *)
 let load_json () : Yojson.Basic.t = Yojson.Basic.from_channel stdin
 
