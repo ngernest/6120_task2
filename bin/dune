@@ -1,4 +1,4 @@
 (executable
- (public_name bril_getting_started)
+ (public_name main)
  (name main)
- (libraries bril_getting_started))
+ (libraries lib))
