@@ -237,5 +237,17 @@ let instr_of_json (json : Yojson.Basic.t) : instr =
       let dest = get_dest json in
       let literal = get_value json in
       Const (dest, literal)
+    else if is_jmp opcode then
+      (* Jmp *)
+      let label = List.hd (get_labels json) in
+      Jmp label
+    else if is_br opcode then
+      (* Br *)
+      let arg = List.hd (get_args json) in
+      let labels = get_labels json in
+      let true_lbl = List.nth labels 0 in
+      let false_lbl = List.nth labels 1 in
+      Br (arg, true_lbl, false_lbl)
+    else if is_nop opcode then Nop
     else failwith "TODO"
   | _ -> failwith (Printf.sprintf "Invalid JSON : %s" (to_string json))
