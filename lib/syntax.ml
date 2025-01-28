@@ -152,7 +152,7 @@ type instr =
   | Br of arg * label * label
   | Ret of arg option
   | Print of arg list
-  | Call of dest * string * arg list
+  | Call of dest option * string * arg list
   | Nop
 [@@deriving sexp]
 
@@ -272,10 +272,12 @@ let instr_of_json (json : Yojson.Basic.t) : instr =
       Print args
     else if is_call opcode then
       (* Call *)
-      let dest = get_dest json in
       let args = get_args json in
       let func_name = List.hd_exn (get_funcs json) in
-      Call (dest, func_name, args)
+      if contains_key json "dest" then
+        let dest = get_dest json in
+        Call (Some dest, func_name, args)
+      else Call (None, func_name, args)
     else if is_nop opcode then Nop
     else failwith (spf "Invalid opcode : %s" opcode)
   | _ -> failwith (spf "Invalid JSON : %s" (to_string json))
