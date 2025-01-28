@@ -1,0 +1,4 @@
+(executable
+ (public_name bril_getting_started)
+ (name main)
+ (libraries bril_getting_started))
