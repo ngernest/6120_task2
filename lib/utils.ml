@@ -4,12 +4,14 @@ open Yojson.Basic.Util
 let load_json () : Yojson.Basic.t = Yojson.Basic.from_channel stdin
 
 (** Infix operator for looking up a key in a JSON object, 
-    where [json $? key] means [json["key"]] *)
-let ( $? ) (json : Yojson.Basic.t) (key : string) : Yojson.Basic.t =
+    where [json $! key] means [json["key"]] 
+    - This returns [`Null] if [json] doesn't contain [key] *)
+let ( $! ) (json : Yojson.Basic.t) (key : string) : Yojson.Basic.t =
   member key json
 
-(** Determines if a JSON object contains a key *)
-let contains_key (json : Yojson.Basic.t) (key : string) : bool =
-  match json $? key with
+(** [json $? key] returns [true] if the [json] object contains the key,
+    and false otherwise *)
+let ( $? ) (json : Yojson.Basic.t) (key : string) : bool =
+  match json $! key with
   | `Null -> false
   | _ -> true
