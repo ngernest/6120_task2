@@ -1,3 +1,5 @@
+open Helpers
+
 (** All [label]s are just strings *)
 type label = string
 
@@ -64,3 +66,15 @@ type func = {
   ret_type : ty option;
   instrs : (string * instr list) list;
 }
+
+(******************************************************************************)
+
+let get_args (json : Yojson.Basic.t) = Helpers.list_of_json (json $! "args")
+
+let instr_of_json (json : Yojson.Basic.t) : instr =
+  match json $! "label" with
+  | `String label -> Label label
+  | `Null -> failwith "TODO"
+  | _ ->
+    failwith
+      (Printf.sprintf "Invalid JSON : %s" (Yojson.Basic.Util.to_string json))

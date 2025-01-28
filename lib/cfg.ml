@@ -1,7 +1,17 @@
-open Utils
+open Helpers
 open Syntax
+open StdLabels
 
-(* let form_blocks body = List.fold_left (fun acc) [] body *)
+(** Determines if an instruction is a terminator ([Jmp], [Br], [Ret]) *)
+let is_terminator : instr -> bool = function
+  | Jmp _ | Br _ | Ret _ -> true
+  | _ -> false
+
+(** Forms a basic block *)
+let form_blocks body = failwith "TODO"
+(* List.fold_left ~f:(fun blocks instr -> let curr_block = [] in if instr $?
+   "op" then if is_terminator (instr $? "op") then List.append blocks
+   (List.append curr_block instr) else failwith "TODO") ~init:[] body *)
 
 (** Creates labels for a list of blocks 
     (generating fresh labels when necessary) *)
@@ -10,5 +20,12 @@ open Syntax
 
 let () =
   let json = load_json () in
-  let functions = json $! "functions" in
+
+  let functions = Helpers.list_of_json (json $! "functions") in
+  let blocks =
+    List.map
+      ~f:(fun func ->
+        let blocks = form_blocks (func $! "instrs") in
+        failwith "TODO")
+      functions in
   failwith "TODO"
