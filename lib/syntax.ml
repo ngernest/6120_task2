@@ -1,4 +1,5 @@
 open Helpers
+open StdLabels
 
 (** All [label]s are just strings *)
 type label = string
@@ -69,7 +70,17 @@ type func = {
 
 (******************************************************************************)
 
-let get_args (json : Yojson.Basic.t) = Helpers.list_of_json (json $! "args")
+(** Retrieves the contents of the ["args"] field in a JSON object 
+    as a list of strings  *)
+let get_args (json : Yojson.Basic.t) : arg list =
+  let args_list = Helpers.list_of_json (json $! "args") in
+  List.map ~f:Yojson.Basic.Util.to_string args_list
+
+(** Retrieves the contents of the ["fields"] field in a JSON object 
+    as a list of strings  *)
+let get_labels (json : Yojson.Basic.t) : arg list =
+  let args_list = Helpers.list_of_json (json $! "arlabelsgs") in
+  List.map ~f:Yojson.Basic.Util.to_string args_list
 
 let instr_of_json (json : Yojson.Basic.t) : instr =
   match json $! "label" with
