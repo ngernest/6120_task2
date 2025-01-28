@@ -45,13 +45,6 @@ type literal =
 type dest = string * ty
 
 (* -------------------------------------------------------------------------- *)
-(*                                  Constants                                 *)
-(* -------------------------------------------------------------------------- *)
-
-(** Determines if an opcode is ["const"] *)
-let is_const (opcode : string) : bool = String.equal opcode "const"
-
-(* -------------------------------------------------------------------------- *)
 (*                              Binary Operators                              *)
 (* -------------------------------------------------------------------------- *)
 
@@ -112,6 +105,33 @@ let is_unop (opcode : string) : bool =
 
 (** Converts a string to an [unop] *)
 let unop_of_string (opcode : string) : unop = List.assoc opcode unop_opcode_map
+
+(* -------------------------------------------------------------------------- *)
+(*                                Other opcodes                               *)
+(* -------------------------------------------------------------------------- *)
+
+(* -------------------- Functions for determining opcodes ------------------- *)
+
+(** Determines if an opcode is ["const"] *)
+let is_const (opcode : string) : bool = String.equal opcode "const"
+
+(** Determines if an opcode is ["nop"] *)
+let is_nop (opcode : string) : bool = String.equal opcode "nop"
+
+(** Determines if an opcode is ["jmp"] *)
+let is_jmp (opcode : string) : bool = String.equal opcode "jmp"
+
+(** Determines if an opcode is ["br"] *)
+let is_br (opcode : string) : bool = String.equal opcode "br"
+
+(** Determines if an opcode is ["call"] *)
+let is_call (opcode : string) : bool = String.equal opcode "call"
+
+(** Determines if an opcode is ["print"] *)
+let is_print (opcode : string) : bool = String.equal opcode "print"
+
+(** Determines if an opcode is ["ret"] *)
+let is_ret (opcode : string) : bool = String.equal opcode "ret"
 
 (* -------------------------------------------------------------------------- *)
 (*                                Instructions                                *)
