@@ -20,7 +20,6 @@ let form_blocks body = failwith "TODO"
 
 let () =
   let json = load_json () in
-
   let functions = Helpers.list_of_json (json $! "functions") in
   let blocks =
     List.map

@@ -1,5 +1,5 @@
 open Helpers
-open Base
+open Core
 
 (* -------------------------------------------------------------------------- *)
 (*                            Labels and arguments                            *)
@@ -34,8 +34,8 @@ let ty_of_string (str : string) : ty =
 
 (** Literal values (int & bool values) *)
 type literal =
-  | LitInt of Base.int
-  | LitBool of Base.bool
+  | LitInt of int
+  | LitBool of bool
 [@@deriving sexp]
 
 (* -------------------------------------------------------------------------- *)
