@@ -15,7 +15,7 @@ type literal =
   | LitBool of bool
 
 (** A {i destination variable} is a pair consisting of 
-    the variable name & the vaariable's type *)
+    the variable name & the variable's type *)
 type dest = string * ty
 
 (** Binary operators *)
