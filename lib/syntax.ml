@@ -147,8 +147,8 @@ type instr =
   | Br of arg * label * label
   | Ret of arg option
   | Print of arg list
-  | Nop
   | Call of dest * string * arg list
+  | Nop
 
 (* -------------------------------------------------------------------------- *)
 (*                                  Functions                                 *)
@@ -208,6 +208,11 @@ let get_dest (json : Yojson.Basic.t) : dest =
   let ty = ty_of_string @@ to_string (json $! "type") in
   (dest_string, ty)
 
+(** Retrieves the contents of the ["funcs"] field in a JSON object
+    as a string list (list of function names) *)
+let get_funcs (json : Yojson.Basic.t) : string list =
+  List.map ~f:to_string (Helpers.list_of_json (json $! "funcs"))
+
 (* -------------------------------------------------------------------------- *)
 (*                  Converting from JSON to Bril instructions                 *)
 (* -------------------------------------------------------------------------- *)
@@ -218,7 +223,12 @@ let instr_of_json (json : Yojson.Basic.t) : instr =
   | `String label -> Label label
   | `Null ->
     let opcode : string = to_string (json $! "op") in
-    if is_binop opcode then
+    if is_const opcode then
+      (* Constants *)
+      let dest = get_dest json in
+      let literal = get_value json in
+      Const (dest, literal)
+    else if is_binop opcode then
       (* Binary operators *)
       let binop = binop_of_string opcode in
       let dest = get_dest json in
@@ -232,11 +242,6 @@ let instr_of_json (json : Yojson.Basic.t) : instr =
       let dest = get_dest json in
       let arg = List.hd (get_args json) in
       Unop (dest, unop, arg)
-    else if is_const opcode then
-      (* Constants *)
-      let dest = get_dest json in
-      let literal = get_value json in
-      Const (dest, literal)
     else if is_jmp opcode then
       (* Jmp *)
       let label = List.hd (get_labels json) in
@@ -248,6 +253,22 @@ let instr_of_json (json : Yojson.Basic.t) : instr =
       let true_lbl = List.nth labels 0 in
       let false_lbl = List.nth labels 1 in
       Br (arg, true_lbl, false_lbl)
+    else if is_ret opcode then
+      (* Ret *)
+      let args = get_args json in
+      match args with
+      | [] -> Ret None
+      | _ -> Ret (Some (List.hd args))
+    else if is_print opcode then
+      (* Print *)
+      let args = get_args json in
+      Print args
+    else if is_call opcode then
+      (* Call *)
+      let dest = get_dest json in
+      let args = get_args json in
+      let func_name = List.hd (get_funcs json) in
+      Call (dest, func_name, args)
     else if is_nop opcode then Nop
-    else failwith "TODO"
-  | _ -> failwith (Printf.sprintf "Invalid JSON : %s" (to_string json))
+    else failwith (spf "Invalid opcode : %s" opcode)
+  | _ -> failwith (spf "Invalid JSON : %s" (to_string json))
