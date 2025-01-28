@@ -3,7 +3,10 @@ open Helpers
 open Yojson.Basic.Util
 open Core
 
-let () =
+(** Prints out every instruction in every function for now. 
+    Run using: 
+    {[ bril2json < bril_files/add-overflow.bril | dune exec -- main ]} *)
+let main () =
   let json = Helpers.load_json () in
   let functions = Helpers.list_of_json (json $! "functions") in
   List.iter functions ~f:(fun func ->
@@ -14,3 +17,5 @@ let () =
           let str = Sexp.to_string_hum (Syntax.sexp_of_instr instr) in
           printf "%s\n" str);
       printf "\n")
+
+let () = main ()
