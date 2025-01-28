@@ -1,6 +1,7 @@
 (library
  (name lib)
- (libraries yojson))
+ (libraries base yojson)
+ (preprocess (pps ppx_jane)))
 
 (env
  (dev

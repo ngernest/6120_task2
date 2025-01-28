@@ -1,15 +1,15 @@
 open Helpers
-open StdLabels
+open Base
 
 (* -------------------------------------------------------------------------- *)
 (*                            Labels and arguments                            *)
 (* -------------------------------------------------------------------------- *)
 
 (** All [label]s are just strings *)
-type label = string
+type label = string [@@deriving sexp]
 
 (** All arguments are strings *)
-type arg = string
+type arg = string [@@deriving sexp]
 
 (* -------------------------------------------------------------------------- *)
 (*                                    Types                                   *)
@@ -19,6 +19,7 @@ type arg = string
 type ty =
   | TyInt
   | TyBool
+[@@deriving sexp]
 
 (** Converts a string to a [ty] *)
 let ty_of_string (str : string) : ty =
@@ -33,8 +34,9 @@ let ty_of_string (str : string) : ty =
 
 (** Literal values (int & bool values) *)
 type literal =
-  | LitInt of int
-  | LitBool of bool
+  | LitInt of Base.int
+  | LitBool of Base.bool
+[@@deriving sexp]
 
 (* -------------------------------------------------------------------------- *)
 (*                            Destination variables                           *)
@@ -42,7 +44,7 @@ type literal =
 
 (** A {i destination variable} is a pair consisting of 
     the variable name & the variable's type *)
-type dest = string * ty
+type dest = string * ty [@@deriving sexp]
 
 (* -------------------------------------------------------------------------- *)
 (*                              Binary Operators                              *)
@@ -61,6 +63,7 @@ type binop =
   | Ge
   | And
   | Or
+[@@deriving sexp]
 
 let binop_opcode_map : (string * binop) list =
   [
@@ -79,12 +82,12 @@ let binop_opcode_map : (string * binop) list =
 
 (** Determines if an opcode represents a binary operator *)
 let is_binop (opcode : string) : bool =
-  let binop_opcodes = List.map ~f:fst binop_opcode_map in
-  List.mem opcode ~set:binop_opcodes
+  let binop_opcodes : string list = List.map ~f:fst binop_opcode_map in
+  List.mem binop_opcodes opcode ~equal:String.equal
 
 (** Converts a string to a [binop] *)
 let binop_of_string (opcode : string) : binop =
-  List.assoc opcode binop_opcode_map
+  List.Assoc.find_exn binop_opcode_map opcode ~equal:String.equal
 
 (* -------------------------------------------------------------------------- *)
 (*                               Unary operators                              *)
@@ -94,6 +97,7 @@ let binop_of_string (opcode : string) : binop =
 type unop =
   | Not
   | Id
+[@@deriving sexp]
 
 (** Maps each unary operator's opcode to the corresponding [unop] *)
 let unop_opcode_map : (string * unop) list = [ ("not", Not); ("id", Id) ]
@@ -101,10 +105,11 @@ let unop_opcode_map : (string * unop) list = [ ("not", Not); ("id", Id) ]
 (** Determines if an opcode represents a binary operator *)
 let is_unop (opcode : string) : bool =
   let unop_opcodes = List.map ~f:fst unop_opcode_map in
-  List.mem opcode ~set:unop_opcodes
+  List.mem unop_opcodes opcode ~equal:String.equal
 
 (** Converts a string to an [unop] *)
-let unop_of_string (opcode : string) : unop = List.assoc opcode unop_opcode_map
+let unop_of_string (opcode : string) : unop =
+  List.Assoc.find_exn unop_opcode_map opcode ~equal:String.equal
 
 (* -------------------------------------------------------------------------- *)
 (*                                Other opcodes                               *)
@@ -149,6 +154,7 @@ type instr =
   | Print of arg list
   | Call of dest * string * arg list
   | Nop
+[@@deriving sexp]
 
 (* -------------------------------------------------------------------------- *)
 (*                                  Functions                                 *)
@@ -169,6 +175,7 @@ type func = {
   ret_type : ty option;
   instrs : (string * instr list) list;
 }
+[@@deriving sexp]
 
 (******************************************************************************)
 (******************************************************************************)
@@ -233,32 +240,32 @@ let instr_of_json (json : Yojson.Basic.t) : instr =
       let binop = binop_of_string opcode in
       let dest = get_dest json in
       let args = get_args json in
-      let arg1 = List.nth args 0 in
-      let arg2 = List.nth args 1 in
+      let arg1 = List.nth_exn args 0 in
+      let arg2 = List.nth_exn args 1 in
       Binop (dest, binop, arg1, arg2)
     else if is_unop opcode then
       (* Unary operators *)
       let unop = unop_of_string opcode in
       let dest = get_dest json in
-      let arg = List.hd (get_args json) in
+      let arg = List.hd_exn (get_args json) in
       Unop (dest, unop, arg)
     else if is_jmp opcode then
       (* Jmp *)
-      let label = List.hd (get_labels json) in
+      let label = List.hd_exn (get_labels json) in
       Jmp label
     else if is_br opcode then
       (* Br *)
-      let arg = List.hd (get_args json) in
+      let arg = List.hd_exn (get_args json) in
       let labels = get_labels json in
-      let true_lbl = List.nth labels 0 in
-      let false_lbl = List.nth labels 1 in
+      let true_lbl = List.nth_exn labels 0 in
+      let false_lbl = List.nth_exn labels 1 in
       Br (arg, true_lbl, false_lbl)
     else if is_ret opcode then
       (* Ret *)
       let args = get_args json in
       match args with
       | [] -> Ret None
-      | _ -> Ret (Some (List.hd args))
+      | _ -> Ret (Some (List.hd_exn args))
     else if is_print opcode then
       (* Print *)
       let args = get_args json in
@@ -267,7 +274,7 @@ let instr_of_json (json : Yojson.Basic.t) : instr =
       (* Call *)
       let dest = get_dest json in
       let args = get_args json in
-      let func_name = List.hd (get_funcs json) in
+      let func_name = List.hd_exn (get_funcs json) in
       Call (dest, func_name, args)
     else if is_nop opcode then Nop
     else failwith (spf "Invalid opcode : %s" opcode)
