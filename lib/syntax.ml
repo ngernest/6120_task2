@@ -1,11 +1,19 @@
 open Helpers
 open StdLabels
 
+(* -------------------------------------------------------------------------- *)
+(*                            Labels and arguments                            *)
+(* -------------------------------------------------------------------------- *)
+
 (** All [label]s are just strings *)
 type label = string
 
 (** All arguments are strings *)
 type arg = string
+
+(* -------------------------------------------------------------------------- *)
+(*                                    Types                                   *)
+(* -------------------------------------------------------------------------- *)
 
 (** Primitive types (int or bools) *)
 type ty =
@@ -19,14 +27,29 @@ let ty_of_string (str : string) : ty =
   | "bool" -> TyBool
   | _ -> failwith (spf "invalid string: %s\n" str)
 
+(* -------------------------------------------------------------------------- *)
+(*                                  Literals                                  *)
+(* -------------------------------------------------------------------------- *)
+
 (** Literal values (int & bool values) *)
 type literal =
   | LitInt of int
   | LitBool of bool
 
+(* -------------------------------------------------------------------------- *)
+(*                            Destination variables                           *)
+(* -------------------------------------------------------------------------- *)
+
 (** A {i destination variable} is a pair consisting of 
     the variable name & the variable's type *)
 type dest = string * ty
+
+(* -------------------------------------------------------------------------- *)
+(*                                  Constants                                 *)
+(* -------------------------------------------------------------------------- *)
+
+(** Determines if an opcode is ["const"] *)
+let is_const (opcode : string) : bool = String.equal opcode "const"
 
 (* -------------------------------------------------------------------------- *)
 (*                              Binary Operators                              *)
@@ -107,6 +130,10 @@ type instr =
   | Nop
   | Call of dest * string * arg list
 
+(* -------------------------------------------------------------------------- *)
+(*                                  Functions                                 *)
+(* -------------------------------------------------------------------------- *)
+
 (** The type of a Bril function: 
 {[
   {
@@ -124,6 +151,13 @@ type func = {
 }
 
 (******************************************************************************)
+(******************************************************************************)
+(******************************************************************************)
+
+(* -------------------------------------------------------------------------- *)
+(*                           Extracting JSON fields                           *)
+(* -------------------------------------------------------------------------- *)
+
 open Yojson.Basic.Util
 
 (** Retrieves the contents of the ["args"] field in a JSON object 
@@ -138,6 +172,15 @@ let get_labels (json : Yojson.Basic.t) : arg list =
   let labels_list = Helpers.list_of_json (json $! "labels") in
   List.map ~f:to_string labels_list
 
+(** Retrieves the contents of the ["value"] field in a JSON object
+    as a Bril literal (either an int or a bool) *)
+let get_value (json : Yojson.Basic.t) : literal =
+  let value = json $! "value" in
+  match value with
+  | `Int i -> LitInt i
+  | `Bool b -> LitBool b
+  | _ -> failwith (spf "Invalid value %s" (to_string value))
+
 (** Retrieves the name and type of the destination variable
     from a JSON object *)
 let get_dest (json : Yojson.Basic.t) : dest =
@@ -145,14 +188,18 @@ let get_dest (json : Yojson.Basic.t) : dest =
   let ty = ty_of_string @@ to_string (json $! "type") in
   (dest_string, ty)
 
+(* -------------------------------------------------------------------------- *)
+(*                  Converting from JSON to Bril instructions                 *)
+(* -------------------------------------------------------------------------- *)
+
 (** Converts a JSON object to an [instr] *)
 let instr_of_json (json : Yojson.Basic.t) : instr =
   match json $! "label" with
   | `String label -> Label label
   | `Null ->
     let opcode : string = to_string (json $! "op") in
-    (* Binary operators *)
     if is_binop opcode then
+      (* Binary operators *)
       let binop = binop_of_string opcode in
       let dest = get_dest json in
       let args = get_args json in
@@ -160,9 +207,15 @@ let instr_of_json (json : Yojson.Basic.t) : instr =
       let arg2 = List.nth args 1 in
       Binop (dest, binop, arg1, arg2)
     else if is_unop opcode then
+      (* Unary operators *)
       let unop = unop_of_string opcode in
       let dest = get_dest json in
       let arg = List.hd (get_args json) in
       Unop (dest, unop, arg)
+    else if is_const opcode then
+      (* Constants *)
+      let dest = get_dest json in
+      let literal = get_value json in
+      Const (dest, literal)
     else failwith "TODO"
   | _ -> failwith (Printf.sprintf "Invalid JSON : %s" (to_string json))
