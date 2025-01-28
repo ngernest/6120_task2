@@ -12,4 +12,5 @@ let () =
       List.iter instrs ~f:(fun instr_json ->
           let instr = Syntax.instr_of_json instr_json in
           let str = Sexp.to_string_hum (Syntax.sexp_of_instr instr) in
-          printf "%s\n" str))
+          printf "%s\n" str);
+      printf "\n")
