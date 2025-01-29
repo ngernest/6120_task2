@@ -6,6 +6,7 @@ This repo contains my OCaml implementation of the tasks for [Lesson 2](https://w
 - [syntax.ml](./lib/syntax.ml): Type definitions for Bril programs + functions for converting from Bril's JSON representation to OCaml types
 - [cfg.ml](./lib/cfg.ml): The algorithm for forming basic blocks & building control flow graphs 
   (translated from the Python code discussed in-class)
+- [`quickcheck_properties.ml`](./lib/quickcheck_properties.ml): QuickCheck generators for Bril types & round-trip properties for serialization
 - [helpers.ml](./lib/helpers.ml): Helper functions for dealing with JSON 
 
 ## Example:
@@ -36,3 +37,4 @@ The [`bril_files`](./bril_files/) subfolder contains a bunch of example Bril fil
 - To run the code, the [Opam](https://opam.ocaml.org) package manager is required. Installation instructions for Opam can be found [here](https://opam.ocaml.org/doc/Install.html).
 - Run `make install` to install all OCaml dependencies
 - Run `make` to compile (under the hood, this invokes the [Dune](https://dune.build/install) build system)
+- Run `make test` to run all the QuickCheck tests in this repo 

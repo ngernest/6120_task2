@@ -11,16 +11,6 @@ type label = string [@@deriving sexp, equal, quickcheck]
 (** All arguments are strings *)
 type arg = string [@@deriving sexp, equal, quickcheck]
 
-(** QuickCheck generator for [label]s: only generates non-empty 
-    alphanumeric strings *)
-let quickcheck_generator_label : label Base_quickcheck.Generator.t =
-  Base_quickcheck.Generator.(string_non_empty_of char_alphanum)
-
-(** QuickCheck generator for [arg]s: only generates non-empty 
-    alphanumeric strings *)
-let quick_generator_arg : arg Base_quickcheck.Generator.t =
-  Base_quickcheck.Generator.(string_non_empty_of char_alphanum)
-
 (* -------------------------------------------------------------------------- *)
 (*                                    Types                                   *)
 (* -------------------------------------------------------------------------- *)
@@ -53,18 +43,6 @@ type literal =
   | LitBool of bool
 [@@deriving sexp, equal, quickcheck]
 
-(** QuickCheck generator for [literal]s: 
-    - Generates small positives [int]s with probability 0.8
-    - Generates [bool]s the remaining time *)
-let quickcheck_generator_literal : literal Base_quickcheck.Generator.t =
-  let open Base_quickcheck.Generator in
-  let open Let_syntax in
-  weighted_union
-    [
-      (0.8, small_strictly_positive_int >>| fun i -> LitInt i);
-      (0.2, [%quickcheck.generator: bool] >>| fun b -> LitBool b);
-    ]
-
 (** Converts a [literal] to its equivalent Yojson representation *)
 let json_of_literal : literal -> Yojson.Basic.t = function
   | LitInt i -> `Int i
@@ -77,11 +55,6 @@ let json_of_literal : literal -> Yojson.Basic.t = function
 (** A {i destination variable} is a pair consisting of 
     the variable name & the variable's type *)
 type dest = string * ty [@@deriving sexp, equal, quickcheck]
-
-(** QuickCheck generator for destination variables *)
-let quickcheck_generator_dest : dest Base_quickcheck.Generator.t =
-  Base_quickcheck.Generator.(
-    both (string_non_empty_of char_alphanum) [%quickcheck.generator: ty])
 
 (** Converts a destination variable to an association list
     mapping JSON field names to Yojson JSON objects *)
@@ -137,12 +110,6 @@ let string_of_binop (binop : binop) : string =
   let inverse_map = inverse binop_opcode_map in
   find_exn inverse_map binop ~equal:equal_binop
 
-let%quick_test "QuickCheck round-trip property for binop serialization" =
- fun (binop : binop) ->
-  let result = binop_of_string (string_of_binop binop) in
-  assert (equal_binop binop result);
-  [%expect {| |}]
-
 (* -------------------------------------------------------------------------- *)
 (*                               Unary operators                              *)
 (* -------------------------------------------------------------------------- *)
@@ -170,12 +137,6 @@ let string_of_unop (unop : unop) : string =
   let open List.Assoc in
   let inverse_map = inverse unop_opcode_map in
   find_exn inverse_map unop ~equal:equal_unop
-
-let%quick_test "QuickCheck round-trip property for unop serialization" =
- fun (unop : unop) ->
-  let result = unop_of_string (string_of_unop unop) in
-  assert (equal_unop unop result);
-  [%expect {| |}]
 
 (* -------------------------------------------------------------------------- *)
 (*                                Other opcodes                               *)
@@ -401,10 +362,3 @@ let json_of_instr (instr : instr) : Yojson.Basic.t =
          ("args", mk_json_string_list args);
        ]
       @ dest_json)
-
-let%quick_test "QuickCheck round-trip property for instruction serialization" =
- fun (instr : instr) ->
-  let instr' = instr_of_json (json_of_instr instr) in
-  let result = equal_instr instr instr' in
-  assert result;
-  [%expect {| |}]
