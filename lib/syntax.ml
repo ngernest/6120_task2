@@ -151,7 +151,7 @@ type instr =
   | Jmp of label
   | Br of arg * label * label
   | Ret of arg option
-  | Print of arg list
+  | Print of arg list [@sexp.list]
   | Call of dest option * string * arg list
   | Nop
 [@@deriving sexp]
