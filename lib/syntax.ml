@@ -78,7 +78,7 @@ type binop =
   | Ge
   | And
   | Or
-[@@deriving sexp, equal]
+[@@deriving sexp, equal, quickcheck]
 
 let binop_opcode_map : (string * binop) list =
   [
@@ -110,6 +110,12 @@ let string_of_binop (binop : binop) : string =
   let inverse_map = inverse binop_opcode_map in
   find_exn inverse_map binop ~equal:equal_binop
 
+let%quick_test "QuickCheck round-trip property for binop serialization" =
+ fun (binop : binop) ->
+  let result = binop_of_string (string_of_binop binop) in
+  assert (equal_binop binop result);
+  [%expect {| |}]
+
 (* -------------------------------------------------------------------------- *)
 (*                               Unary operators                              *)
 (* -------------------------------------------------------------------------- *)
@@ -118,7 +124,7 @@ let string_of_binop (binop : binop) : string =
 type unop =
   | Not
   | Id
-[@@deriving sexp, equal]
+[@@deriving sexp, equal, quickcheck]
 
 (** Maps each unary operator's opcode to the corresponding [unop] *)
 let unop_opcode_map : (string * unop) list = [ ("not", Not); ("id", Id) ]
@@ -137,6 +143,12 @@ let string_of_unop (unop : unop) : string =
   let open List.Assoc in
   let inverse_map = inverse unop_opcode_map in
   find_exn inverse_map unop ~equal:equal_unop
+
+let%quick_test "QuickCheck round-trip property for unop serialization" =
+ fun (unop : unop) ->
+  let result = unop_of_string (string_of_unop unop) in
+  assert (equal_unop unop result);
+  [%expect {| |}]
 
 (* -------------------------------------------------------------------------- *)
 (*                                Other opcodes                               *)

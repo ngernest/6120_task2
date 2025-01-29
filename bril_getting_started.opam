@@ -10,6 +10,8 @@ homepage: "https://github.com/username/reponame"
 doc: "https://url/to/documentation"
 bug-reports: "https://github.com/username/reponame/issues"
 depends: [
+  "ppx_quick_test" {>= "v0.17.0"}
+  "base_quickcheck" {>= "v0.17.0"}
   "yojson" {>= "2.2.2"}
   "ppx_jane" {>= "v0.17.0"}
   "core" {>= "v0.17.1"}

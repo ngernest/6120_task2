@@ -20,6 +20,10 @@
  (synopsis "A short synopsis")
  (description "A longer description")
  (depends
+  (ppx_quick_test
+   (>= v0.17.0))
+  (base_quickcheck
+   (>= v0.17.0))
   (yojson
    (>= 2.2.2))
   (ppx_jane
