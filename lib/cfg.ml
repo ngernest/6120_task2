@@ -18,18 +18,22 @@ type block = instr list [@@deriving sexp]
 
 (** Forms basic blocks containing the instructions in [body] *)
 let form_blocks (body : instr list) : block list =
+  (* printf "Entered form_blocks\n"; *)
   let curr_block : block ref = ref [] in
   (* NB: [blocks] is the list of basic blocks that this function outputs *)
-  List.fold_left
+  List.fold
     ~f:(fun blocks instr ->
-      if is_op instr then
+      (* printf "Processing %s\n" (Sexp.to_string_hum (sexp_of_instr instr)); *)
+      if is_op instr then (
+        (* Add the current instruction to the block *)
+        curr_block := List.append !curr_block [ instr ];
         (* A terminator terminates [curr_block], so we need to add it to
            [blocks] *)
         if is_terminator instr then (
           let new_blocks = List.append blocks [ !curr_block ] in
           curr_block := [];
           new_blocks)
-        else blocks
+        else blocks)
       else
         (* We have a label *)
         let new_blocks =
@@ -89,25 +93,25 @@ let mycfg () : unit =
   List.iter functions ~f:(fun func ->
       (* Convert Bril programs from JSON to a typed representation *)
       let instrs = List.map ~f:instr_of_json (list_of_json (func $! "instrs")) in
-      printf "instrs: %s\n" (Sexp.to_string_hum ([%sexp_of: instr list] instrs));
 
       let blocks = form_blocks instrs in
-      printf "blocks: %s\n" (Sexp.to_string_hum ([%sexp_of: block list] blocks));
 
       (* Fetch labelled basic blocks *)
       let name2block = mk_block_map blocks in
-      printf "name2block: %s\n"
+      printf "name2block:\n  %s\n"
         (Sexp.to_string_hum ([%sexp_of: (label * block) list] name2block));
 
       (* Print the label & instructions in each block *)
       List.iter name2block ~f:(fun (name, block) ->
           printf "%s\n" name;
-          printf "  %s\n" (Sexp.to_string_hum (sexp_of_block block));
-          let cfg = get_cfg name2block in
+          printf "  %s\n" (Sexp.to_string_hum (sexp_of_block block)));
 
-          (* Produce GraphViz visualization *)
-          printf "diagraph %s {{" (Yojson.Basic.Util.to_string (func $! "name"));
-          List.iter name2block ~f:(fun (name, _) -> printf "  %s;" name);
-          List.iter cfg ~f:(fun (name, succs) ->
-              List.iter succs ~f:(fun succ -> printf "  %s -> %s" name succ));
-          printf "}\n"))
+      (* Build the CFG *)
+      let cfg = get_cfg name2block in
+
+      (* Produce GraphViz visualization *)
+      printf "diagraph %s {{\n" (Yojson.Basic.Util.to_string (func $! "name"));
+      List.iter name2block ~f:(fun (name, _) -> printf "  %s;\n" name);
+      List.iter cfg ~f:(fun (name, succs) ->
+          List.iter succs ~f:(fun succ -> printf "  %s -> %s\n" name succ));
+      printf "}\n")
