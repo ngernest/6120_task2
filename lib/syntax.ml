@@ -28,6 +28,11 @@ let ty_of_string (str : string) : ty =
   | "bool" -> TyBool
   | _ -> failwith (spf "invalid string: %s\n" str)
 
+(** Converts a [ty] to its string representation *)
+let string_of_ty : ty -> string = function
+  | TyInt -> "int"
+  | TyBool -> "bool"
+
 (* -------------------------------------------------------------------------- *)
 (*                                  Literals                                  *)
 (* -------------------------------------------------------------------------- *)
@@ -38,6 +43,11 @@ type literal =
   | LitBool of bool
 [@@deriving sexp]
 
+(** Converts a [literal] to its equivalent Yojson representation *)
+let json_of_literal : literal -> Yojson.Basic.t = function
+  | LitInt i -> `Int i
+  | LitBool b -> `Bool b
+
 (* -------------------------------------------------------------------------- *)
 (*                            Destination variables                           *)
 (* -------------------------------------------------------------------------- *)
@@ -45,6 +55,11 @@ type literal =
 (** A {i destination variable} is a pair consisting of 
     the variable name & the variable's type *)
 type dest = string * ty [@@deriving sexp]
+
+(** Converts a destination variable to an association list
+    mapping JSON field names to Yojson JSON objects *)
+let json_of_dest ((varname, ty) : dest) : (string * Yojson.Basic.t) list =
+  [ ("var", `String varname); ("type", `String (string_of_ty ty)) ]
 
 (* -------------------------------------------------------------------------- *)
 (*                              Binary Operators                              *)
@@ -281,3 +296,18 @@ let instr_of_json (json : Yojson.Basic.t) : instr =
     else if is_nop opcode then Nop
     else failwith (spf "Invalid opcode : %s" opcode)
   | _ -> failwith (spf "Invalid JSON : %s" (to_string json))
+
+(* -------------------------------------------------------------------------- *)
+(*                  Converting from Bril instructions to JSON                 *)
+(* -------------------------------------------------------------------------- *)
+
+(** Converts a Bril instruction to its Yojson JSON representation *)
+let json_of_instr (instr : instr) : Yojson.Basic.t =
+  match instr with
+  | Label label -> `Assoc [ ("label", `String label) ]
+  | Const (dest, literal) ->
+    let dest_json = json_of_dest dest in
+    `Assoc
+      ((("op", `String "const") :: dest_json)
+      @ [ ("value", json_of_literal literal) ])
+  | _ -> failwith "TODO"
