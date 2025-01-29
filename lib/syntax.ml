@@ -325,6 +325,10 @@ let instr_of_json (json : Yojson.Basic.t) : instr =
 (*                  Converting from Bril instructions to JSON                 *)
 (* -------------------------------------------------------------------------- *)
 
+(** Converts a list of OCaml strings to a JSON string list *)
+let mk_json_string_list (xs : string list) : Yojson.Basic.t =
+  `List (List.map ~f:(fun x -> `String x) xs)
+
 (** Converts a Bril instruction to its Yojson JSON representation *)
 let json_of_instr (instr : instr) : Yojson.Basic.t =
   match instr with
@@ -337,9 +341,17 @@ let json_of_instr (instr : instr) : Yojson.Basic.t =
   | Jmp lbl ->
     `Assoc [ ("op", `String "jmp"); ("labels", `List [ `String lbl ]) ]
   | Print args ->
+    `Assoc [ ("op", `String "print"); ("args", mk_json_string_list args) ]
+  | Nop -> `Assoc [ ("op", `String "nop") ]
+  | Br (arg, true_lbl, false_lbl) ->
     `Assoc
       [
-        ("op", `String "print");
-        ("args", `List (List.map ~f:(fun arg -> `String arg) args));
+        ("args", `List [ `String arg ]);
+        ("labels", mk_json_string_list [ true_lbl; false_lbl ]);
       ]
+  | Binop (dest, binop, arg1, arg2) ->
+    let dest_json = json_of_dest dest in
+    `Assoc
+      ((("op", `String (string_of_binop binop)) :: dest_json)
+      @ [ ("args", mk_json_string_list [ arg1; arg2 ]) ])
   | _ -> failwith "TODO: json_of_instr"
