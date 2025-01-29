@@ -354,4 +354,7 @@ let json_of_instr (instr : instr) : Yojson.Basic.t =
     `Assoc
       ((("op", `String (string_of_binop binop)) :: dest_json)
       @ [ ("args", mk_json_string_list [ arg1; arg2 ]) ])
+  | Ret None -> `Assoc [ ("op", `String "ret") ]
+  | Ret (Some arg) ->
+    `Assoc [ ("op", `String "ret"); ("args", mk_json_string_list [ arg ]) ]
   | _ -> failwith "TODO: json_of_instr"
