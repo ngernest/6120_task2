@@ -6,10 +6,10 @@ open Core
 (* -------------------------------------------------------------------------- *)
 
 (** All [label]s are just strings *)
-type label = string [@@deriving sexp, quickcheck]
+type label = string [@@deriving sexp, equal, quickcheck]
 
 (** All arguments are strings *)
-type arg = string [@@deriving sexp, quickcheck]
+type arg = string [@@deriving sexp, equal, quickcheck]
 
 (** QuickCheck generator for [label]s: only generates non-empty 
     alphanumeric strings *)
@@ -29,7 +29,7 @@ let quick_generator_arg : arg Base_quickcheck.Generator.t =
 type ty =
   | TyInt
   | TyBool
-[@@deriving sexp, quickcheck]
+[@@deriving sexp, equal, quickcheck]
 
 (** Converts a string to a [ty] *)
 let ty_of_string (str : string) : ty =
@@ -51,7 +51,7 @@ let string_of_ty : ty -> string = function
 type literal =
   | LitInt of int
   | LitBool of bool
-[@@deriving sexp, quickcheck]
+[@@deriving sexp, equal, quickcheck]
 
 (** QuickCheck generator for [literal]s: 
     - Generates small positives [int]s with probability 0.8
@@ -76,12 +76,17 @@ let json_of_literal : literal -> Yojson.Basic.t = function
 
 (** A {i destination variable} is a pair consisting of 
     the variable name & the variable's type *)
-type dest = string * ty [@@deriving sexp, quickcheck]
+type dest = string * ty [@@deriving sexp, equal, quickcheck]
+
+(** QuickCheck generator for destination variables *)
+let quickcheck_generator_dest : dest Base_quickcheck.Generator.t =
+  Base_quickcheck.Generator.(
+    both (string_non_empty_of char_alphanum) [%quickcheck.generator: ty])
 
 (** Converts a destination variable to an association list
     mapping JSON field names to Yojson JSON objects *)
 let json_of_dest ((varname, ty) : dest) : (string * Yojson.Basic.t) list =
-  [ ("var", `String varname); ("type", `String (string_of_ty ty)) ]
+  [ ("dest", `String varname); ("type", `String (string_of_ty ty)) ]
 
 (* -------------------------------------------------------------------------- *)
 (*                              Binary Operators                              *)
@@ -215,7 +220,7 @@ type instr =
   | Print of arg list [@sexp.list]
   | Call of dest option * string * arg list
   | Nop
-[@@deriving sexp, quickcheck]
+[@@deriving sexp, equal, quickcheck]
 
 (* -------------------------------------------------------------------------- *)
 (*                                  Functions                                 *)
@@ -237,10 +242,6 @@ type func = {
   instrs : (string * instr list) list; [@sexp.list]
 }
 [@@deriving sexp]
-
-(******************************************************************************)
-(******************************************************************************)
-(******************************************************************************)
 
 (* -------------------------------------------------------------------------- *)
 (*                           Extracting JSON fields                           *)
@@ -369,6 +370,7 @@ let json_of_instr (instr : instr) : Yojson.Basic.t =
   | Br (arg, true_lbl, false_lbl) ->
     `Assoc
       [
+        ("op", `String "br");
         ("args", mk_json_string_list [ arg ]);
         ("labels", mk_json_string_list [ true_lbl; false_lbl ]);
       ]
@@ -399,3 +401,10 @@ let json_of_instr (instr : instr) : Yojson.Basic.t =
          ("args", mk_json_string_list args);
        ]
       @ dest_json)
+
+let%quick_test "QuickCheck round-trip property for instruction serialization" =
+ fun (instr : instr) ->
+  let instr' = instr_of_json (json_of_instr instr) in
+  let result = equal_instr instr instr' in
+  assert result;
+  [%expect {| |}]

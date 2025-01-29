@@ -1,4 +1,5 @@
 open Lib
+open Syntax
 open Helpers
 open Yojson.Basic.Util
 open Core
