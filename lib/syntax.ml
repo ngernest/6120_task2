@@ -336,30 +336,44 @@ let json_of_instr (instr : instr) : Yojson.Basic.t =
   | Const (dest, literal) ->
     let dest_json = json_of_dest dest in
     `Assoc
-      ((("op", `String "const") :: dest_json)
-      @ [ ("value", json_of_literal literal) ])
+      (("op", `String "const")
+      :: ("value", json_of_literal literal)
+      :: dest_json)
   | Jmp lbl ->
-    `Assoc [ ("op", `String "jmp"); ("labels", `List [ `String lbl ]) ]
+    `Assoc [ ("op", `String "jmp"); ("labels", mk_json_string_list [ lbl ]) ]
   | Print args ->
     `Assoc [ ("op", `String "print"); ("args", mk_json_string_list args) ]
   | Nop -> `Assoc [ ("op", `String "nop") ]
   | Br (arg, true_lbl, false_lbl) ->
     `Assoc
       [
-        ("args", `List [ `String arg ]);
+        ("args", mk_json_string_list [ arg ]);
         ("labels", mk_json_string_list [ true_lbl; false_lbl ]);
       ]
   | Binop (dest, binop, arg1, arg2) ->
     let dest_json = json_of_dest dest in
     `Assoc
-      ((("op", `String (string_of_binop binop)) :: dest_json)
-      @ [ ("args", mk_json_string_list [ arg1; arg2 ]) ])
+      (("op", `String (string_of_binop binop))
+      :: ("args", mk_json_string_list [ arg1; arg2 ])
+      :: dest_json)
   | Unop (dest, unop, arg) ->
     let dest_json = json_of_dest dest in
     `Assoc
-      ((("op", `String (string_of_unop unop)) :: dest_json)
-      @ [ ("args", mk_json_string_list [ arg ]) ])
+      (("op", `String (string_of_unop unop))
+      :: ("args", mk_json_string_list [ arg ])
+      :: dest_json)
   | Ret None -> `Assoc [ ("op", `String "ret") ]
   | Ret (Some arg) ->
     `Assoc [ ("op", `String "ret"); ("args", mk_json_string_list [ arg ]) ]
-  | _ -> failwith "TODO: json_of_instr"
+  | Call (dest_opt, func_name, args) ->
+    let dest_json =
+      match dest_opt with
+      | None -> []
+      | Some dest -> json_of_dest dest in
+    `Assoc
+      ([
+         ("op", `String "call");
+         ("funcs", mk_json_string_list [ func_name ]);
+         ("args", mk_json_string_list args);
+       ]
+      @ dest_json)
