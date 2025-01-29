@@ -13,6 +13,7 @@ let is_op : instr -> bool = function
   | Label _ -> false
   | _ -> true
 
+(** A basic [block] contains an ordered list of instructions *)
 type block = instr list
 
 (** Forms basic blocks containing the instructions in [body] *)
