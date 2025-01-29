@@ -18,4 +18,4 @@ let main () =
           printf "%s\n" str);
       printf "\n")
 
-let () = main ()
+let () = Cfg.mycfg ()

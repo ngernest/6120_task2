@@ -46,13 +46,14 @@ let mk_block_map (blocks : block list) : (label * block) list =
   List.rev
   @@ List.fold
        ~f:(fun acc block ->
+         let fresh_name = spf "b%d" (List.length acc) in
          match block with
-         | [] -> failwith "Empty block with no instructions"
+         | [] -> (fresh_name, block) :: acc
          | hd :: tl ->
            let name =
              match hd with
              | Label lbl -> lbl
-             | _ -> spf "b%d" (List.length acc) in
+             | _ -> fresh_name in
            (name, tl) :: acc)
        ~init:[] blocks
 

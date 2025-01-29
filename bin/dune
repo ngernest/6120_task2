@@ -2,3 +2,9 @@
  (public_name main)
  (name main)
  (libraries lib core))
+
+(env
+ (dev
+  (flags
+   (:standard -g -w "-26-27-32-33-34-39"))))
+   
