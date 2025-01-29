@@ -107,15 +107,14 @@ let mycfg () : unit =
       let name2block = mk_block_map blocks in
 
       (* Print the label & instructions in each block *)
-      List.iter name2block ~f:(fun (name, block) ->
-          printf "%s\n" name;
-          printf "  %s\n" (Sexp.to_string_hum (sexp_of_block block)));
+      (* List.iter name2block ~f:(fun (name, block) -> printf "%s\n" name;
+         printf " %s\n" (Sexp.to_string_hum (sexp_of_block block))); *)
 
       (* Build the CFG *)
       let cfg = get_cfg name2block in
 
       (* Produce GraphViz visualization *)
-      printf "diagraph %s {{\n" (Yojson.Basic.Util.to_string (func $! "name"));
+      printf "digraph %s {\n" (Yojson.Basic.Util.to_string (func $! "name"));
       List.iter name2block ~f:(fun (name, _) -> printf "  %s;\n" name);
       List.iter cfg ~f:(fun (name, succs) ->
           List.iter succs ~f:(fun succ -> printf "  %s -> %s\n" name succ));
