@@ -171,9 +171,9 @@ type instr =
 ]} *)
 type func = {
   name : string;
-  args : (string * ty) list;
-  ret_type : ty option;
-  instrs : (string * instr list) list;
+  args : (string * ty) list; [@sexp.list]
+  ret_type : ty option; [@sexp.option]
+  instrs : (string * instr list) list; [@sexp.list]
 }
 [@@deriving sexp]
 

@@ -19,6 +19,7 @@ type block = instr list [@@deriving sexp]
 (** Forms basic blocks containing the instructions in [body] *)
 let form_blocks (body : instr list) : block list =
   let curr_block : block ref = ref [] in
+  (* NB: [blocks] is the list of basic blocks that this function outputs *)
   List.fold_left
     ~f:(fun blocks instr ->
       if is_op instr then
