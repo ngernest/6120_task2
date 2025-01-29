@@ -58,7 +58,7 @@ let mk_block_map (blocks : block list) : (label * block) list =
 
 (** Given a name-to-block map [name2block], [get_cfg] 
     produces a map from block names to a list of successor block names *)
-let get_cfg (name2block : (string * block) list) : (label * label list) list =
+let get_cfg (name2block : (label * block) list) : (label * label list) list =
   List.rev
   @@ List.foldi
        ~f:(fun i acc (name, block) ->
@@ -79,15 +79,24 @@ let get_cfg (name2block : (string * block) list) : (label * label list) list =
          (name, succ) :: acc)
        ~init:[] name2block
 
-let () =
+(** Constructs a CFG for a Bril program *)
+let mycfg () : unit =
   let json = load_json () in
-  let functions = Helpers.list_of_json (json $! "functions") in
-  let blocks =
-    List.map
-      ~f:(fun func ->
-        let instrs =
-          List.map ~f:instr_of_json (list_of_json (func $! "instrs")) in
-        let blocks = form_blocks instrs in
-        failwith "TODO")
-      functions in
-  failwith "TODO"
+  let functions = list_of_json (json $! "functions") in
+  List.iter functions ~f:(fun func ->
+      (* Convert Bril programs from JSON to a typed representation *)
+      let instrs = List.map ~f:instr_of_json (list_of_json (func $! "instrs")) in
+      (* Fetch labelled basic blocks *)
+      let name2block = mk_block_map (form_blocks instrs) in
+      (* Print the label & instructions in each block *)
+      List.iter name2block ~f:(fun (name, block) ->
+          printf "%s\n" name;
+          printf "  %s\n" (Sexp.to_string_hum (sexp_of_block block));
+          let cfg = get_cfg name2block in
+
+          (* Produce GraphViz visualization *)
+          printf "diagraph %s {{" (Yojson.Basic.Util.to_string (func $! "name"));
+          List.iter name2block ~f:(fun (name, _) -> printf "  %s;" name);
+          List.iter cfg ~f:(fun (name, succs) ->
+              List.iter succs ~f:(fun succ -> printf "  %s -> %s" name succ));
+          printf "}\n"))
