@@ -6,10 +6,20 @@ open Core
 (* -------------------------------------------------------------------------- *)
 
 (** All [label]s are just strings *)
-type label = string [@@deriving sexp]
+type label = string [@@deriving sexp, quickcheck]
 
 (** All arguments are strings *)
-type arg = string [@@deriving sexp]
+type arg = string [@@deriving sexp, quickcheck]
+
+(** QuickCheck generator for [label]s: only generates non-empty 
+    alphanumeric strings *)
+let quickcheck_generator_label : label Base_quickcheck.Generator.t =
+  Base_quickcheck.Generator.(string_non_empty_of char_alphanum)
+
+(** QuickCheck generator for [arg]s: only generates non-empty 
+    alphanumeric strings *)
+let quick_generator_arg : arg Base_quickcheck.Generator.t =
+  Base_quickcheck.Generator.(string_non_empty_of char_alphanum)
 
 (* -------------------------------------------------------------------------- *)
 (*                                    Types                                   *)
@@ -19,7 +29,7 @@ type arg = string [@@deriving sexp]
 type ty =
   | TyInt
   | TyBool
-[@@deriving sexp]
+[@@deriving sexp, quickcheck]
 
 (** Converts a string to a [ty] *)
 let ty_of_string (str : string) : ty =
@@ -41,7 +51,19 @@ let string_of_ty : ty -> string = function
 type literal =
   | LitInt of int
   | LitBool of bool
-[@@deriving sexp]
+[@@deriving sexp, quickcheck]
+
+(** QuickCheck generator for [literal]s: 
+    - Generates small positives [int]s with probability 0.8
+    - Generates [bool]s the remaining time *)
+let quickcheck_generator_literal : literal Base_quickcheck.Generator.t =
+  let open Base_quickcheck.Generator in
+  let open Let_syntax in
+  weighted_union
+    [
+      (0.8, small_strictly_positive_int >>| fun i -> LitInt i);
+      (0.2, [%quickcheck.generator: bool] >>| fun b -> LitBool b);
+    ]
 
 (** Converts a [literal] to its equivalent Yojson representation *)
 let json_of_literal : literal -> Yojson.Basic.t = function
@@ -54,7 +76,7 @@ let json_of_literal : literal -> Yojson.Basic.t = function
 
 (** A {i destination variable} is a pair consisting of 
     the variable name & the variable's type *)
-type dest = string * ty [@@deriving sexp]
+type dest = string * ty [@@deriving sexp, quickcheck]
 
 (** Converts a destination variable to an association list
     mapping JSON field names to Yojson JSON objects *)
@@ -193,7 +215,7 @@ type instr =
   | Print of arg list [@sexp.list]
   | Call of dest option * string * arg list
   | Nop
-[@@deriving sexp]
+[@@deriving sexp, quickcheck]
 
 (* -------------------------------------------------------------------------- *)
 (*                                  Functions                                 *)
