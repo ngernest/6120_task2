@@ -42,8 +42,19 @@ let form_blocks (body : instr list) : block list =
 
 (** Creates labels for a list of blocks 
     (generating fresh labels when necessary) *)
-(* let mk_block_map blocks = List.map (fun block -> if block $? "key" )
-   blocks *)
+let mk_block_map (blocks : block list) : (string * block) list =
+  List.rev
+  @@ List.fold_left
+       ~f:(fun acc block ->
+         match block with
+         | [] -> failwith "Empty block with no instructions"
+         | hd :: tl ->
+           let name =
+             match hd with
+             | Label lbl -> lbl
+             | _ -> spf "b%d" (List.length acc) in
+           (name, tl) :: acc)
+       ~init:[] blocks
 
 let () =
   let json = load_json () in
