@@ -18,48 +18,31 @@ type block = instr list [@@deriving sexp]
 
 (** Forms basic blocks containing the instructions in [body] *)
 let form_blocks (body : instr list) : block list =
-  printf "Entered form_blocks\n";
   let curr_block : block ref = ref [] in
   (* NB: [blocks] is the list of basic blocks that this function outputs *)
   let blocks =
     List.fold
       ~f:(fun blocks instr ->
-        printf "instr = %s\n" (Sexp.to_string_hum (sexp_of_instr instr));
         if is_op instr then (
           (* Add the current instruction to the block *)
           curr_block := List.append !curr_block [ instr ];
           (* A terminator terminates [curr_block], so we need to add it to
              [blocks] *)
           if is_terminator instr then (
-            printf "  previously, curr_block = %s\n"
-              (Sexp.to_string_hum ([%sexp_of: block] !curr_block));
             let new_blocks = List.append blocks [ !curr_block ] in
             curr_block := [];
-            printf "  now, curr_block = %s\n"
-              (Sexp.to_string_hum ([%sexp_of: block] !curr_block));
-            printf "  new_blocks = %s\n"
-              (Sexp.to_string_hum ([%sexp_of: block list] new_blocks));
             new_blocks)
-          else (
-            printf "  blocks = %s\n"
-              (Sexp.to_string_hum ([%sexp_of: block list] blocks));
-            blocks))
-        else (
+          else blocks)
+        else
           (* We have a label *)
-          printf "  previously, curr_block = %s\n"
-            (Sexp.to_string_hum ([%sexp_of: block] !curr_block));
           let new_blocks =
             if not (List.is_empty !curr_block) then
               List.append blocks [ !curr_block ]
             else blocks in
           curr_block := [ instr ];
-          printf "  now, curr_block = %s\n"
-            (Sexp.to_string_hum ([%sexp_of: block] !curr_block));
-          printf "  new_blocks = %s\n"
-            (Sexp.to_string_hum ([%sexp_of: block list] new_blocks));
-          new_blocks))
+          new_blocks)
       ~init:[] body in
-  (* Need to add a final block to [blocks] if we have any instrs remaining *)
+  (* Need to add a final block to [blocks] if we have any [instr]s remaining *)
   if not (List.is_empty !curr_block) then List.append blocks [ !curr_block ]
   else blocks
 
@@ -91,12 +74,7 @@ let get_cfg (name2block : (label * block) list) : (label * label list) list =
   List.rev
   @@ List.foldi
        ~f:(fun i acc (name, block) ->
-         if List.is_empty block then (
-           printf "Block w/ label %s is empty!\n" name;
-           (* Fall through to the next block in [name2block] *)
-           (* let keys = List.map ~f:fst name2block in let succ = [ List.nth_exn
-              keys (i + 1) ] in *)
-           (name, []) :: acc)
+         if List.is_empty block then (name, []) :: acc
          else
            let last = List.last_exn block in
            let succ =
@@ -124,16 +102,9 @@ let mycfg () : unit =
       let instrs = List.map ~f:instr_of_json (list_of_json (func $! "instrs")) in
 
       let blocks = form_blocks instrs in
-      printf "\n\n";
-      printf "No. of blocks = %d\n" (List.length blocks);
-      printf "blocks:\n    %s\n"
-        (Sexp.to_string_hum ~indent:8 ([%sexp_of: block list] blocks));
 
       (* Fetch labelled basic blocks *)
       let name2block = mk_block_map blocks in
-
-      printf "name2block:\n %s\n"
-        (Sexp.to_string_hum ([%sexp_of: (label * block) list] name2block));
 
       (* Print the label & instructions in each block *)
       List.iter name2block ~f:(fun (name, block) ->
