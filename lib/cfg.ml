@@ -63,21 +63,23 @@ let get_cfg (name2block : (label * block) list) : (label * label list) list =
   List.rev
   @@ List.foldi
        ~f:(fun i acc (name, block) ->
-         let last = List.last_exn block in
-         let succ =
-           match last with
-           | Jmp label -> [ label ]
-           | Br (_, lbl1, lbl2) -> [ lbl1; lbl2 ]
-           | Ret _ -> []
-           | _ when Int.equal i (List.length name2block - 1) ->
-             (* We've reached the last instruction in the block, so there is no
-                successor *)
-             []
-           | _ ->
-             (* Fall through to the next block in [name2block] *)
-             let keys = List.map ~f:fst name2block in
-             [ List.nth_exn keys (i + 1) ] in
-         (name, succ) :: acc)
+         if List.is_empty block then (name, []) :: acc
+         else
+           let last = List.last_exn block in
+           let succ =
+             match last with
+             | Jmp label -> [ label ]
+             | Br (_, lbl1, lbl2) -> [ lbl1; lbl2 ]
+             | Ret _ -> []
+             | _ when Int.equal i (List.length name2block - 1) ->
+               (* We've reached the last instruction in the block, so there is
+                  no successor *)
+               []
+             | _ ->
+               (* Fall through to the next block in [name2block] *)
+               let keys = List.map ~f:fst name2block in
+               [ List.nth_exn keys (i + 1) ] in
+           (name, succ) :: acc)
        ~init:[] name2block
 
 (** Constructs a CFG for a Bril program *)
@@ -87,8 +89,16 @@ let mycfg () : unit =
   List.iter functions ~f:(fun func ->
       (* Convert Bril programs from JSON to a typed representation *)
       let instrs = List.map ~f:instr_of_json (list_of_json (func $! "instrs")) in
+      printf "instrs: %s\n" (Sexp.to_string_hum ([%sexp_of: instr list] instrs));
+
+      let blocks = form_blocks instrs in
+      printf "blocks: %s\n" (Sexp.to_string_hum ([%sexp_of: block list] blocks));
+
       (* Fetch labelled basic blocks *)
-      let name2block = mk_block_map (form_blocks instrs) in
+      let name2block = mk_block_map blocks in
+      printf "name2block: %s\n"
+        (Sexp.to_string_hum ([%sexp_of: (label * block) list] name2block));
+
       (* Print the label & instructions in each block *)
       List.iter name2block ~f:(fun (name, block) ->
           printf "%s\n" name;

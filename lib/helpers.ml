@@ -25,6 +25,3 @@ let list_of_json (json : Yojson.Basic.t) : Yojson.Basic.t list =
   match json with
   | `Null -> []
   | _ -> Yojson.Basic.Util.to_list json
-
-(** [xs >:: x] appends [x] to the end of [xs] *)
-let ( >:: ) xs x = xs @ [ x ]
