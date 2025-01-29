@@ -31,8 +31,12 @@ let form_blocks (body : instr list) : block list =
           (* A terminator terminates [curr_block], so we need to add it to
              [blocks] *)
           if is_terminator instr then (
+            printf "  previously, curr_block = %s\n"
+              (Sexp.to_string_hum ([%sexp_of: block] !curr_block));
             let new_blocks = List.append blocks [ !curr_block ] in
             curr_block := [];
+            printf "  now, curr_block = %s\n"
+              (Sexp.to_string_hum ([%sexp_of: block] !curr_block));
             printf "  new_blocks = %s\n"
               (Sexp.to_string_hum ([%sexp_of: block list] new_blocks));
             new_blocks)
@@ -40,16 +44,20 @@ let form_blocks (body : instr list) : block list =
             printf "  blocks = %s\n"
               (Sexp.to_string_hum ([%sexp_of: block list] blocks));
             blocks))
-        else
+        else (
           (* We have a label *)
+          printf "  previously, curr_block = %s\n"
+            (Sexp.to_string_hum ([%sexp_of: block] !curr_block));
           let new_blocks =
             if not (List.is_empty !curr_block) then
               List.append blocks [ !curr_block ]
             else blocks in
           curr_block := [ instr ];
+          printf "  now, curr_block = %s\n"
+            (Sexp.to_string_hum ([%sexp_of: block] !curr_block));
           printf "  new_blocks = %s\n"
             (Sexp.to_string_hum ([%sexp_of: block list] new_blocks));
-          new_blocks)
+          new_blocks))
       ~init:[] body in
   (* Need to add a final block to [blocks] if we have any instrs remaining *)
   if not (List.is_empty !curr_block) then List.append blocks [ !curr_block ]
@@ -78,7 +86,12 @@ let get_cfg (name2block : (label * block) list) : (label * label list) list =
   List.rev
   @@ List.foldi
        ~f:(fun i acc (name, block) ->
-         if List.is_empty block then (name, []) :: acc
+         if List.is_empty block then (
+           printf "Block w/ label %s is empty!\n" name;
+           (* Fall through to the next block in [name2block] *)
+           (* let keys = List.map ~f:fst name2block in let succ = [ List.nth_exn
+              keys (i + 1) ] in *)
+           (name, []) :: acc)
          else
            let last = List.last_exn block in
            let succ =
@@ -86,14 +99,14 @@ let get_cfg (name2block : (label * block) list) : (label * label list) list =
              | Jmp label -> [ label ]
              | Br (_, lbl1, lbl2) -> [ lbl1; lbl2 ]
              | Ret _ -> []
-             | _ when Int.equal i (List.length name2block - 1) ->
-               (* We've reached the last instruction in the block, so there is
-                  no successor *)
-               []
              | _ ->
-               (* Fall through to the next block in [name2block] *)
-               let keys = List.map ~f:fst name2block in
-               [ List.nth_exn keys (i + 1) ] in
+               if Int.equal i (List.length name2block - 1) then
+                 (* We've reached the block, so there is no successor *)
+                 []
+               else
+                 (* Fall through to the next block in [name2block] *)
+                 let keys = List.map ~f:fst name2block in
+                 [ List.nth_exn keys (i + 1) ] in
            (name, succ) :: acc)
        ~init:[] name2block
 
@@ -114,8 +127,8 @@ let mycfg () : unit =
       (* Fetch labelled basic blocks *)
       let name2block = mk_block_map blocks in
 
-      (* printf "name2block:\n %s\n" (Sexp.to_string_hum ([%sexp_of: (label *
-         block) list] name2block)); *)
+      printf "name2block:\n %s\n"
+        (Sexp.to_string_hum ([%sexp_of: (label * block) list] name2block));
 
       (* Print the label & instructions in each block *)
       List.iter name2block ~f:(fun (name, block) ->
