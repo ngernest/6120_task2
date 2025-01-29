@@ -13,7 +13,7 @@ let is_op : instr -> bool = function
   | Label _ -> false
   | _ -> true
 
-(** A basic [block] contains an ordered list of instructions *)
+(** The type of {i basic blocks} (an ordered list of instructions) *)
 type block = instr list [@@deriving sexp]
 
 (** Forms basic blocks containing the instructions in [body] *)
@@ -42,9 +42,9 @@ let form_blocks (body : instr list) : block list =
 
 (** Creates labels for a list of blocks 
     (generating fresh labels when necessary) *)
-let mk_block_map (blocks : block list) : (string * block) list =
+let mk_block_map (blocks : block list) : (label * block) list =
   List.rev
-  @@ List.fold_left
+  @@ List.fold
        ~f:(fun acc block ->
          match block with
          | [] -> failwith "Empty block with no instructions"
@@ -55,6 +55,29 @@ let mk_block_map (blocks : block list) : (string * block) list =
              | _ -> spf "b%d" (List.length acc) in
            (name, tl) :: acc)
        ~init:[] blocks
+
+(** Given a name-to-block map [name2block], [get_cfg] 
+    produces a map from block names to a list of successor block names *)
+let get_cfg (name2block : (string * block) list) : (label * label list) list =
+  List.rev
+  @@ List.foldi
+       ~f:(fun i acc (name, block) ->
+         let last = List.last_exn block in
+         let succ =
+           match last with
+           | Jmp label -> [ label ]
+           | Br (_, lbl1, lbl2) -> [ lbl1; lbl2 ]
+           | Ret _ -> []
+           | _ when Int.equal i (List.length name2block - 1) ->
+             (* We've reached the last instruction in the block, so there is no
+                successor *)
+             []
+           | _ ->
+             (* Fall through to the next block in [name2block] *)
+             let keys = List.map ~f:fst name2block in
+             [ List.nth_exn keys (i + 1) ] in
+         (name, succ) :: acc)
+       ~init:[] name2block
 
 let () =
   let json = load_json () in
