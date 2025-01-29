@@ -1,9 +1,10 @@
 # CS 6120 Lesson 2: Representing Programs 
 
-This repo contains my OCaml implementation of the tasks for [Lesson 2](https://www.cs.cornell.edu/courses/cs6120/2025sp/lesson/2//#tasks).
+This repo contains an OCaml implementation of the tasks for [Lesson 2](https://www.cs.cornell.edu/courses/cs6120/2025sp/lesson/2//#tasks).
 
 ## Code overview:
 - [`syntax.ml`](./lib/syntax.ml): Type definitions for Bril programs + functions for converting from Bril's JSON representation to OCaml types
+  - Note: we only support the [*core* Bril instructions](https://capra.cs.cornell.edu/bril/lang/core.html) for now
 - [`cfg.ml`](./lib/cfg.ml): The algorithm for forming basic blocks & building control flow graphs 
   (translated from the Python code discussed in-class)
 - [`quickcheck_properties.ml`](./lib/quickcheck_properties.ml): QuickCheck generators for Bril types & round-trip properties for serialization
