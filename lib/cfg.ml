@@ -73,11 +73,16 @@ let mk_block_map (blocks : block list) : (label * block) list =
          match block with
          | [] -> (fresh_name, block) :: acc
          | hd :: tl ->
-           let name =
+           (* If [hd = Label lbl], then we want [lbl] to only point to [tl] (the
+              remaining [instr]s in the [block]).
+
+              Otherwise, we produce a fresh name and make it point to the
+              entirety of the block. *)
+           let name, block =
              match hd with
-             | Label lbl -> lbl
-             | _ -> fresh_name in
-           (name, tl) :: acc)
+             | Label lbl -> (lbl, tl)
+             | _ -> (fresh_name, block) in
+           (name, block) :: acc)
        ~init:[] blocks
 
 (** Given a name-to-block map [name2block], [get_cfg] 
