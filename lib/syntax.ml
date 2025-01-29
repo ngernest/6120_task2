@@ -78,7 +78,7 @@ type binop =
   | Ge
   | And
   | Or
-[@@deriving sexp]
+[@@deriving sexp, equal]
 
 let binop_opcode_map : (string * binop) list =
   [
@@ -104,6 +104,12 @@ let is_binop (opcode : string) : bool =
 let binop_of_string (opcode : string) : binop =
   List.Assoc.find_exn binop_opcode_map opcode ~equal:String.equal
 
+(** Converts a [binop] to a string *)
+let string_of_binop (binop : binop) : string =
+  let open List.Assoc in
+  let inverse_map = inverse binop_opcode_map in
+  find_exn inverse_map binop ~equal:equal_binop
+
 (* -------------------------------------------------------------------------- *)
 (*                               Unary operators                              *)
 (* -------------------------------------------------------------------------- *)
@@ -112,7 +118,7 @@ let binop_of_string (opcode : string) : binop =
 type unop =
   | Not
   | Id
-[@@deriving sexp]
+[@@deriving sexp, equal]
 
 (** Maps each unary operator's opcode to the corresponding [unop] *)
 let unop_opcode_map : (string * unop) list = [ ("not", Not); ("id", Id) ]
@@ -125,6 +131,12 @@ let is_unop (opcode : string) : bool =
 (** Converts a string to an [unop] *)
 let unop_of_string (opcode : string) : unop =
   List.Assoc.find_exn unop_opcode_map opcode ~equal:String.equal
+
+(** Converts an [unop] to a string *)
+let string_of_unop (unop : unop) : string =
+  let open List.Assoc in
+  let inverse_map = inverse unop_opcode_map in
+  find_exn inverse_map unop ~equal:equal_unop
 
 (* -------------------------------------------------------------------------- *)
 (*                                Other opcodes                               *)
