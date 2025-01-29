@@ -334,4 +334,12 @@ let json_of_instr (instr : instr) : Yojson.Basic.t =
     `Assoc
       ((("op", `String "const") :: dest_json)
       @ [ ("value", json_of_literal literal) ])
-  | _ -> failwith "TODO"
+  | Jmp lbl ->
+    `Assoc [ ("op", `String "jmp"); ("labels", `List [ `String lbl ]) ]
+  | Print args ->
+    `Assoc
+      [
+        ("op", `String "print");
+        ("args", `List (List.map ~f:(fun arg -> `String arg) args));
+      ]
+  | _ -> failwith "TODO: json_of_instr"
