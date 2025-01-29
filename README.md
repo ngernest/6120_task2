@@ -1,4 +1,4 @@
-# CS 6120 Lesson 2 Implementation Tasks: Representing Programs 
+# CS 6120 Lesson 2: Representing Programs 
 
 This repo contains my OCaml implementation of the tasks for [Lesson 2](https://www.cs.cornell.edu/courses/cs6120/2025sp/lesson/2//#tasks).
 
