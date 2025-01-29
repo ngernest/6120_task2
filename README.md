@@ -3,10 +3,10 @@
 This repo contains my OCaml implementation of the tasks for [Lesson 2](https://www.cs.cornell.edu/courses/cs6120/2025sp/lesson/2//#tasks).
 
 ## Code overview:
-- [syntax.ml](./lib/syntax.ml): Type definitions for Bril programs
+- [syntax.ml](./lib/syntax.ml): Type definitions for Bril programs + functions for converting from Bril's JSON representation to OCaml types
 - [cfg.ml](./lib/cfg.ml): The algorithm for forming basic blocks & building control flow graphs 
   (translated from the Python code discussed in-class)
-- [helpers.ml](./lib/syntax.ml): Helper functions for dealing with JSON 
+- [helpers.ml](./lib/helpers.ml): Helper functions for dealing with JSON 
 
 ## Example:
 To test the CFG algorithm on an example Bril program [`jmp.bril`](./bril_files/jmp.bril), run the following:
