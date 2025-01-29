@@ -1,10 +1,10 @@
 (library
  (name lib)
  (libraries core yojson)
- (preprocess (pps ppx_jane)))
+ (preprocess
+  (pps ppx_jane)))
 
 (env
  (dev
   (flags
    (:standard -g -w "-26-27-32-33-34-39"))))
-   

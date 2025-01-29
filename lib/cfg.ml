@@ -1,6 +1,6 @@
 open Helpers
 open Syntax
-open StdLabels
+open Core
 
 (** Determines if an instruction is a terminator ([Jmp], [Br], [Ret]) *)
 let is_terminator : instr -> bool = function
@@ -14,11 +14,11 @@ let is_op : instr -> bool = function
   | _ -> true
 
 (** A basic [block] contains an ordered list of instructions *)
-type block = instr list
+type block = instr list [@@deriving sexp]
 
 (** Forms basic blocks containing the instructions in [body] *)
 let form_blocks (body : instr list) : block list =
-  let curr_block = ref [] in
+  let curr_block : block ref = ref [] in
   List.fold_left
     ~f:(fun blocks instr ->
       if is_op instr then
