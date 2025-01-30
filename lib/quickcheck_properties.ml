@@ -54,3 +54,12 @@ let%quick_test "round-trip property for unop serialization" =
   let result = unop_of_string (string_of_unop unop) in
   assert (equal_unop unop result);
   [%expect {| |}]
+
+(* TODO: Other possible CFG properties:
+
+   1. if a basic block contains a terminator, the terminator is the last
+   instruction in the block
+
+   2. every block appears in the [name2block] block
+
+   3. every instruction gets assigned to one (and only one) block *)
