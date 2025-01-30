@@ -1,3 +1,1 @@
-open Lib
-
-let () = Add_nops.add_nops_pipeline ()
+let () = Lib.Add_nops.add_nops_pipeline ()
