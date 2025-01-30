@@ -200,7 +200,7 @@ type func = {
   name : string;
   args : (string * ty) list; [@sexp.list]
   ret_type : ty option; [@sexp.option]
-  instrs : (string * instr list) list; [@sexp.list]
+  instrs : instr list; [@sexp.list]
 }
 [@@deriving sexp]
 
@@ -362,3 +362,22 @@ let json_of_instr (instr : instr) : Yojson.Basic.t =
          ("args", mk_json_string_list args);
        ]
       @ dest_json)
+
+(** Converts a Bril function to its Yojson JSON representation *)
+let json_of_func (func : func) : Yojson.Basic.t =
+  let json_args =
+    List.map
+      ~f:(fun (name, ty) ->
+        `Assoc [ ("name", `String name); ("type", `String (string_of_ty ty)) ])
+      func.args in
+  let return_type_json =
+    match func.ret_type with
+    | None -> []
+    | Some ty -> [ ("type", `String (string_of_ty ty)) ] in
+  `Assoc
+    ([
+       ("name", `String func.name);
+       ("args", `List json_args);
+       ("instrs", `List (List.map ~f:json_of_instr func.instrs));
+     ]
+    @ return_type_json)
