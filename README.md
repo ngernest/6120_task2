@@ -15,18 +15,18 @@ This repo contains an OCaml implementation of the tasks for [Lesson 2](https://w
 - [`cfg.ml`](./lib/cfg.ml): The algorithm for forming basic blocks & building control flow graphs 
   (translated from the Python code discussed in-class)
 - [`add_nops.ml`](./lib/add_nops.ml): Transforms Bril programs by adding a `Nop` after each instruction
-- [`quickcheck_properties.ml`](./lib/quickcheck_properties.ml): QuickCheck generators for Bril types & serialization round-trip properties
+- [`quickcheck_properties.ml`](./lib/quickcheck_properties.ml): QuickCheck generators for Bril types & QC properties for CFGs / serialization
 - [`helpers.ml`](./lib/helpers.ml): Helper functions for dealing with JSON 
 
 ## CFG Algorithm Example:
 To test the CFG algorithm on an example Bril program [`jmp.bril`](./bril_tests/jmp.bril), run the following:
 ```bash 
-$ bril2json < bril_tests/jmp.bril | dune exec -- main | dot -Tpdf -o cfg.pdf
-$ open cfg.pdf
+$ bril2json < bril_tests/jmp.bril | dune exec -- main | dot -Tpdf -o jmp_cfg.pdf
+$ open jmp_cfg.pdf
 ```
-This produces a GraphViz visualization of the CFG in [`cfg.pdf`](./cfg.pdf).
+This produces a GraphViz visualization of the CFG in [`jmp_cfg.pdf`](./jmp_cfg.pdf).
 
-On the example program, the basic blocks built are: 
+The basic blocks for this program are: 
 ```bash
 # Basic blocks for `jmp.bril`
 b0
@@ -36,7 +36,11 @@ b1
 somewhere
   ((Print v))
 ```
-Note that the OCaml implementation has found the same basic blocks as the Python program discussed in the [pre-recorded lesson 2 video](https://www.cs.cornell.edu/courses/cs6120/2025sp/lesson/2//#tasks)! This gives us some confidence that the OCaml implementation behaves the same as the Python one.
+Note that the OCaml implementation has found the same basic blocks as the Python program discussed in the [pre-recorded lesson 2 video](https://www.cs.cornell.edu/courses/cs6120/2025sp/lesson/2//#tasks)! 
+
+The CFG algorithm has also been tested on [`br.bril`](./bril_tests/br.bril), whose CFG was discussed in the [pre-recorded videos](https://www.cs.cornell.edu/courses/cs6120/2022sp/lesson/2/), and the output of our algorithm (in [`br_cfg.pdf`](./br_cfg.pdf)) is the same as the CFG in the video. 
+
+We also have some QuickCheck properties ([`quickcheck_properties.ml`](./lib/quickcheck_properties.ml)) which test whether various invariants are maintained during CFG construction.
 
 ## Program transformation: Adding Nop after every instruction 
 In [`add_nops.ml`](./lib/add_nops.ml), we implement a transformation which adds a [Nop] instruction
