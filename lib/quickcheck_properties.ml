@@ -7,19 +7,19 @@ open Syntax
 
 (** QuickCheck generator for [label]s: only generates non-empty 
     alphanumeric strings *)
-let quickcheck_generator_label : label Base_quickcheck.Generator.t =
-  Base_quickcheck.Generator.(string_non_empty_of char_alphanum)
+let quickcheck_generator_label : label Generator.t =
+  Generator.(string_non_empty_of char_alphanum)
 
 (** QuickCheck generator for [arg]s: only generates non-empty 
         alphanumeric strings *)
-let quick_generator_arg : arg Base_quickcheck.Generator.t =
-  Base_quickcheck.Generator.(string_non_empty_of char_alphanum)
+let quick_generator_arg : arg Generator.t =
+  Generator.(string_non_empty_of char_alphanum)
 
 (** QuickCheck generator for [literal]s: 
     - Generates small positives [int]s with probability 0.8
     - Generates [bool]s the remaining time *)
-let quickcheck_generator_literal : literal Base_quickcheck.Generator.t =
-  let open Base_quickcheck.Generator in
+let quickcheck_generator_literal : literal Generator.t =
+  let open Generator in
   let open Let_syntax in
   weighted_union
     [
@@ -28,8 +28,8 @@ let quickcheck_generator_literal : literal Base_quickcheck.Generator.t =
     ]
 
 (** QuickCheck generator for destination variables *)
-let quickcheck_generator_dest : dest Base_quickcheck.Generator.t =
-  Base_quickcheck.Generator.(
+let quickcheck_generator_dest : dest Generator.t =
+  Generator.(
     both (string_non_empty_of char_alphanum) [%quickcheck.generator: ty])
 
 (* -------------------------------------------------------------------------- *)

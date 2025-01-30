@@ -429,3 +429,14 @@ let json_of_func (func : func) : Yojson.Basic.t =
        ("instrs", `List (List.map ~f:json_of_instr func.instrs));
      ]
     @ return_type_json)
+
+(* -------------------------------------------------------------------------- *)
+(*                                  Programs                                  *)
+(* -------------------------------------------------------------------------- *)
+
+(** A top-level Bril progrma is a list of functions ([func]) *)
+type prog = func list [@@deriving sexp, equal, quickcheck]
+
+(** Converts a Bril program to its JSON representation *)
+let json_of_prog (prog : prog) : Yojson.Basic.t =
+  `Assoc [ ("functions", `List (List.map ~f:json_of_func prog)) ]
