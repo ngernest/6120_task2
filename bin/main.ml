@@ -5,8 +5,8 @@ open Yojson.Basic.Util
 open Core
 
 (** Prints out every instruction in every function for now. 
-    Run using: 
-    {[ bril2json < bril_tests/add-overflow.bril | dune exec -- main ]} *)
+    Example usage: 
+    {[ bril2json < bril_tests/jmp.bril | dune exec -- main ]} *)
 let main () =
   let json = Helpers.load_json () in
   let functions = Helpers.list_of_json (json $! "functions") in

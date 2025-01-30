@@ -15,4 +15,4 @@ let add_nops_pipeline () =
     List.map ~f:func_of_json (list_of_json (json $! "functions")) in
   let updated_functions = List.map ~f:add_nops functions in
   let output_json = json_of_prog updated_functions in
-  printf "%s\n" (Yojson.Basic.Util.to_string output_json)
+  printf "%s\n" (Yojson.Basic.pretty_to_string output_json)

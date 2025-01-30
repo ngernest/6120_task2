@@ -250,30 +250,37 @@ let get_funcs (json : Yojson.Basic.t) : string list =
 (** Extracts the ["name"] field in a JSON object 
     (this is used for Bril functions only) *)
 let get_name (json : Yojson.Basic.t) : string =
+  let open Yojson.Basic in
   match json $! "name" with
   | `String name -> name
-  | `Null -> failwith (spf "Missing name field in %s\n" (to_string json))
-  | _ -> failwith (spf "Invalid json %s\n" (to_string json))
+  | `Null -> failwith (spf "Missing name field in %s\n" (pretty_to_string json))
+  | _ -> failwith (spf "Invalid json %s\n" (pretty_to_string json))
 
 (** Retrieves the optional ["type"] field in a JSON object as a [ty option] 
     (this is used for Bril functions only) *)
 let get_type_option (json : Yojson.Basic.t) : ty option =
+  let open Yojson.Basic in
   match json $! "type" with
   | `String ty_name -> Some (ty_of_string ty_name)
   | `Null -> None
-  | _ -> failwith (spf "Invalid json %s\n" (to_string json))
+  | _ -> failwith (spf "Invalid json %s\n" (pretty_to_string json))
 
 (** Retrieves the list of arguments in a function JSON object
-    as an association list of type [(arg * ty) list] *)
+    as an association list of type [(arg * ty) list] 
+    - If the function has no arguments, the empty list is returned
+    *)
 let get_func_args (json : Yojson.Basic.t) : (arg * ty) list =
+  let open Yojson.Basic in
   match json $! "args" with
   | `List arg_objs ->
     List.map arg_objs ~f:(fun arg_obj ->
         match (arg_obj $! "name", arg_obj $! "type") with
         | `String name, `String ty_name -> (name, ty_of_string ty_name)
-        | _ -> failwith (spf "Malformed argument json %s\n" (to_string arg_obj)))
-  | `Null -> failwith (spf "Missing args field in %s\n" (to_string json))
-  | _ -> failwith (spf "Invalid json %s\n" (to_string json))
+        | _ ->
+          failwith
+            (spf "Malformed argument json %s\n" (pretty_to_string arg_obj)))
+  | `Null -> []
+  | _ -> failwith (spf "Invalid json %s\n" (pretty_to_string json))
 
 (* -------------------------------------------------------------------------- *)
 (*                  Converting from JSON to Bril instructions                 *)
@@ -335,15 +342,17 @@ let instr_of_json (json : Yojson.Basic.t) : instr =
       else Call (None, func_name, args)
     else if is_nop opcode then Nop
     else failwith (spf "Invalid opcode : %s" opcode)
-  | _ -> failwith (spf "Invalid JSON : %s" (to_string json))
+  | _ -> failwith (spf "Invalid JSON : %s" (Yojson.Basic.pretty_to_string json))
 
 (** Retrieves the ["instrs"] field in a JSON object as a [instr list]
     (this is used for Bril functions only) *)
 let get_instrs (json : Yojson.Basic.t) : instr list =
+  let open Yojson.Basic in
   match json $! "instrs" with
   | `List instrs -> List.map ~f:instr_of_json instrs
-  | `Null -> failwith (spf "Missing instrs field in %s\n" (to_string json))
-  | _ -> failwith (spf "Invalid json %s\n" (to_string json))
+  | `Null ->
+    failwith (spf "Missing instrs field in %s\n" (pretty_to_string json))
+  | _ -> failwith (spf "Invalid json %s\n" (pretty_to_string json))
 
 (** Converts a Bril function JSON object to the [func] type *)
 let func_of_json (json : Yojson.Basic.t) : func =
