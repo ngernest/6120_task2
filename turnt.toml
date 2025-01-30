@@ -1,1 +1,1 @@
-command = "bril2json < {filename} | dune exec -- nops | brili"
+command = "bril2json < {filename} | dune exec -- nops | brilirs"
