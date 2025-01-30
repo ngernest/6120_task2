@@ -94,7 +94,7 @@ let get_cfg (name2block : (label * block) list) : (label * label list) list =
        ~init:[] name2block
 
 (** Constructs a CFG for a Bril program *)
-let mycfg () : unit =
+let build_cfg () : unit =
   let json = load_json () in
   let functions = list_of_json (json $! "functions") in
   List.iter functions ~f:(fun func ->
