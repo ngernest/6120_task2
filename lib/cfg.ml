@@ -106,7 +106,8 @@ let mycfg () : unit =
       (* Fetch labelled basic blocks *)
       let name2block = mk_block_map blocks in
 
-      (* Print the label & instructions in each block *)
+      (* Uncomment this if you want to print the label & instructions in each
+         block *)
       (* List.iter name2block ~f:(fun (name, block) -> printf "%s\n" name;
          printf " %s\n" (Sexp.to_string_hum (sexp_of_block block))); *)
 

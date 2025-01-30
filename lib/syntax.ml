@@ -198,7 +198,7 @@ type instr =
 ]} *)
 type func = {
   name : string;
-  args : (string * ty) list; [@sexp.list]
+  args : (arg * ty) list; [@sexp.list]
   ret_type : ty option; [@sexp.option]
   instrs : instr list; [@sexp.list]
 }
@@ -210,9 +210,11 @@ type func = {
 
 open Yojson.Basic.Util
 
+(* ---------------------------- For instructions ---------------------------- *)
+
 (** Retrieves the contents of the ["args"] field in a JSON object 
     as a list of strings  *)
-let get_args (json : Yojson.Basic.t) : arg list =
+let get_instr_args (json : Yojson.Basic.t) : arg list =
   let args_list = Helpers.list_of_json (json $! "args") in
   List.map ~f:to_string args_list
 
@@ -243,6 +245,36 @@ let get_dest (json : Yojson.Basic.t) : dest =
 let get_funcs (json : Yojson.Basic.t) : string list =
   List.map ~f:to_string (Helpers.list_of_json (json $! "funcs"))
 
+(* ------------------------------ For functions ----------------------------- *)
+
+(** Extracts the ["name"] field in a JSON object 
+    (this is used for Bril functions only) *)
+let get_name (json : Yojson.Basic.t) : string =
+  match json $! "name" with
+  | `String name -> name
+  | `Null -> failwith (spf "Missing name field in %s\n" (to_string json))
+  | _ -> failwith (spf "Invalid json %s\n" (to_string json))
+
+(** Retrieves the optional ["type"] field in a JSON object as a [ty option] 
+    (this is used for Bril functions only) *)
+let get_type_option (json : Yojson.Basic.t) : ty option =
+  match json $! "type" with
+  | `String ty_name -> Some (ty_of_string ty_name)
+  | `Null -> None
+  | _ -> failwith (spf "Invalid json %s\n" (to_string json))
+
+(** Retrieves the list of arguments in a function JSON object
+    as an association list of type [(arg * ty) list] *)
+let get_func_args (json : Yojson.Basic.t) : (arg * ty) list =
+  match json $! "args" with
+  | `List arg_objs ->
+    List.map arg_objs ~f:(fun arg_obj ->
+        match (arg_obj $! "name", arg_obj $! "type") with
+        | `String name, `String ty_name -> (name, ty_of_string ty_name)
+        | _ -> failwith (spf "Malformed argument json %s\n" (to_string arg_obj)))
+  | `Null -> failwith (spf "Missing args field in %s\n" (to_string json))
+  | _ -> failwith (spf "Invalid json %s\n" (to_string json))
+
 (* -------------------------------------------------------------------------- *)
 (*                  Converting from JSON to Bril instructions                 *)
 (* -------------------------------------------------------------------------- *)
@@ -262,7 +294,7 @@ let instr_of_json (json : Yojson.Basic.t) : instr =
       (* Binary operators *)
       let binop = binop_of_string opcode in
       let dest = get_dest json in
-      let args = get_args json in
+      let args = get_instr_args json in
       let arg1 = List.nth_exn args 0 in
       let arg2 = List.nth_exn args 1 in
       Binop (dest, binop, arg1, arg2)
@@ -270,7 +302,7 @@ let instr_of_json (json : Yojson.Basic.t) : instr =
       (* Unary operators *)
       let unop = unop_of_string opcode in
       let dest = get_dest json in
-      let arg = List.hd_exn (get_args json) in
+      let arg = List.hd_exn (get_instr_args json) in
       Unop (dest, unop, arg)
     else if is_jmp opcode then
       (* Jmp *)
@@ -278,24 +310,24 @@ let instr_of_json (json : Yojson.Basic.t) : instr =
       Jmp label
     else if is_br opcode then
       (* Br *)
-      let arg = List.hd_exn (get_args json) in
+      let arg = List.hd_exn (get_instr_args json) in
       let labels = get_labels json in
       let true_lbl = List.nth_exn labels 0 in
       let false_lbl = List.nth_exn labels 1 in
       Br (arg, true_lbl, false_lbl)
     else if is_ret opcode then
       (* Ret *)
-      let args = get_args json in
+      let args = get_instr_args json in
       match args with
       | [] -> Ret None
       | _ -> Ret (Some (List.hd_exn args))
     else if is_print opcode then
       (* Print *)
-      let args = get_args json in
+      let args = get_instr_args json in
       Print args
     else if is_call opcode then
       (* Call *)
-      let args = get_args json in
+      let args = get_instr_args json in
       let func_name = List.hd_exn (get_funcs json) in
       if contains_key json "dest" then
         let dest = get_dest json in
@@ -304,6 +336,22 @@ let instr_of_json (json : Yojson.Basic.t) : instr =
     else if is_nop opcode then Nop
     else failwith (spf "Invalid opcode : %s" opcode)
   | _ -> failwith (spf "Invalid JSON : %s" (to_string json))
+
+(** Retrieves the ["instrs"] field in a JSON object as a [instr list]
+    (this is used for Bril functions only) *)
+let get_instrs (json : Yojson.Basic.t) : instr list =
+  match json $! "instrs" with
+  | `List instrs -> List.map ~f:instr_of_json instrs
+  | `Null -> failwith (spf "Missing instrs field in %s\n" (to_string json))
+  | _ -> failwith (spf "Invalid json %s\n" (to_string json))
+
+(** Converts a Bril function JSON object to the [func] type *)
+let func_of_json (json : Yojson.Basic.t) : func =
+  let name = get_name json in
+  let args = get_func_args json in
+  let ret_type = get_type_option json in
+  let instrs = get_instrs json in
+  { name; args; ret_type; instrs }
 
 (* -------------------------------------------------------------------------- *)
 (*                  Converting from Bril instructions to JSON                 *)
