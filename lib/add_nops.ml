@@ -9,7 +9,7 @@ let add_nops (func : func) : func =
 
 (** Pipeline for adding [Nop] instructions after each instruction 
     in every function in a program *)
-let add_nops_pipeline () =
+let add_nops_pipeline () : unit =
   let json = load_json () in
   let functions =
     List.map ~f:func_of_json (list_of_json (json $! "functions")) in
