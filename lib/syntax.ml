@@ -443,7 +443,8 @@ let json_of_func (func : func) : Yojson.Basic.t =
 (*                                  Programs                                  *)
 (* -------------------------------------------------------------------------- *)
 
-(** A top-level Bril progrma is a list of functions ([func]) *)
+(** A top-level Bril program is a list of functions, 
+    each of which have type [func] *)
 type prog = func list [@@deriving sexp, equal, quickcheck]
 
 (** Converts a Bril program to its JSON representation *)
