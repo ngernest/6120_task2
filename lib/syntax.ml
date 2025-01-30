@@ -202,7 +202,7 @@ type func = {
   ret_type : ty option; [@sexp.option]
   instrs : instr list; [@sexp.list]
 }
-[@@deriving sexp]
+[@@deriving sexp, equal, quickcheck]
 
 (* -------------------------------------------------------------------------- *)
 (*                           Extracting JSON fields                           *)

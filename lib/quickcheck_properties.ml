@@ -36,6 +36,13 @@ let quickcheck_generator_dest : dest Base_quickcheck.Generator.t =
 (*                            QuickCheck properties                           *)
 (* -------------------------------------------------------------------------- *)
 
+let%quick_test "round-trip property for function serialization" =
+ fun (func : func) ->
+  let func' = func_of_json (json_of_func func) in
+  let result = equal_func func func' in
+  assert result;
+  [%expect {| |}]
+
 let%quick_test "round-trip property for instruction serialization" =
  fun (instr : instr) ->
   let instr' = instr_of_json (json_of_instr instr) in
