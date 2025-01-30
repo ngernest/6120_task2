@@ -93,9 +93,14 @@ let get_cfg (name2block : (label * block) list) : (label * label list) list =
            (name, succ) :: acc)
        ~init:[] name2block
 
-(** Constructs a CFG for a Bril program *)
-let build_cfg () : unit =
-  let json = load_json () in
+(** Constructs a CFG for a Bril program
+    - The optional argument [filename] represents the filename 
+*)
+let build_cfg ?(filename : string option) () : unit =
+  let json =
+    match filename with
+    | None -> load_json ()
+    | Some fname -> Yojson.Basic.from_file fname in
   let functions = list_of_json (json $! "functions") in
   List.iter functions ~f:(fun func ->
       (* Convert Bril programs from JSON to a typed representation *)
